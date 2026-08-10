@@ -1,0 +1,14 @@
+'use client'
+
+import { useState, useRef, useEffect } from 'react'
+import { Search, Building2, User, X, BriefcaseBusiness, ClipboardCheck } from 'lucide-react'
+import Link from 'next/link'
+import { fullTextSearch, type SearchResult } from '@/app/actions/search'
+
+export function GlobalSearch() {
+  const [query, setQuery] = useState(''); const [results, setResults] = useState<SearchResult[]>([]); const [loading, setLoading] = useState(false); const [isOpen, setIsOpen] = useState(false); const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => { const handler = (event: MouseEvent) => { if (ref.current && !ref.current.contains(event.target as Node)) setIsOpen(false) }; document.addEventListener('mousedown', handler); return () => document.removeEventListener('mousedown', handler) }, [])
+  useEffect(() => { if (query.trim().length < 2) { setResults([]); setIsOpen(false); return }; const timer = setTimeout(async () => { setLoading(true); const response = await fullTextSearch(query); if (response.success) { setResults(response.data); setIsOpen(true) }; setLoading(false) }, 250); return () => clearTimeout(timer) }, [query])
+  const iconFor = (type: SearchResult['type']) => type === 'company' ? <Building2 className="w-3.5 h-3.5" /> : type === 'follow_up' ? <ClipboardCheck className="w-3.5 h-3.5" /> : type === 'opportunity' ? <BriefcaseBusiness className="w-3.5 h-3.5" /> : <User className="w-3.5 h-3.5" />
+  return <div ref={ref} className="relative"><div className="bg-subtle px-4 py-2 rounded-pill flex items-center w-64 border border-transparent focus-within:border-blue-500 focus-within:bg-shell"><Search className="w-4 h-4 text-text-muted" /><input value={query} onChange={event => setQuery(event.target.value)} onFocus={() => results.length > 0 && setIsOpen(true)} placeholder="Search CORA..." className="bg-transparent outline-none ml-2 text-[13px] w-full text-text-primary" />{query && <button onClick={() => { setQuery(''); setResults([]); setIsOpen(false) }} aria-label="Clear search"><X className="w-3.5 h-3.5" /></button>}</div>{isOpen && <div className="absolute top-full left-0 right-0 mt-2 bg-shell border border-border-hairline rounded-[14px] shadow-lg z-50 overflow-hidden">{loading ? <div className="px-4 py-3 text-[13px] text-text-muted">Searching...</div> : results.length === 0 ? <div className="px-4 py-3 text-[13px] text-text-muted">No results</div> : results.map(result => <Link key={`${result.type}-${result.id}`} href={result.href} onClick={() => setIsOpen(false)} className="flex items-center gap-3 px-4 py-3 hover:bg-subtle"><div className="w-7 h-7 rounded-full flex items-center justify-center bg-blue-100 text-blue-500">{iconFor(result.type)}</div><div className="min-w-0"><p className="text-[13px] font-medium text-text-primary truncate">{result.title}</p><p className="text-[11px] text-text-muted truncate">{result.subtitle ?? result.type}</p></div></Link>)}</div>}</div>
+}

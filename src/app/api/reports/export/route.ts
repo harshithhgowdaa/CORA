@@ -1,0 +1,4 @@
+import { NextResponse } from 'next/server'
+import { exportReport, type ReportEntity } from '@/app/actions/reports'
+
+export async function GET(request: Request) { const entity = new URL(request.url).searchParams.get('entity') as ReportEntity | null; if (!entity || !['companies', 'contacts', 'interactions', 'follow_ups', 'opportunities', 'ownership'].includes(entity)) return NextResponse.json({ error: 'Invalid report entity' }, { status: 400 }); const result = await exportReport(entity); if (!result.success) return NextResponse.json({ error: result.error, code: result.code }, { status: result.code === 'FORBIDDEN' ? 403 : 500 }); return new NextResponse(result.data.content, { headers: { 'Content-Type': 'text/csv; charset=utf-8', 'Content-Disposition': `attachment; filename="${result.data.filename}"` } }) }
