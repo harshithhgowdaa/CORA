@@ -48,7 +48,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
             {/* Logo */}
             <Link href="/" className="relative w-10 h-10 overflow-hidden rounded-xl shadow-sm hover:opacity-90 transition-opacity">
               <Image 
-                src="/logo.png" 
+                src="/logo.jpg" 
                 alt="CORA Logo" 
                 fill 
                 sizes="40px"
