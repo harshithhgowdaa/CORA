@@ -1,5 +1,6 @@
 import { ReactNode } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { headers } from 'next/headers'
 import { LayoutDashboard, Building2, Users, Search, LogOut, TrendingUp, Bell, CalendarClock } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
@@ -39,14 +40,21 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     <div className="flex h-screen w-full bg-app p-4 md:p-6 overflow-hidden">
       
       {/* Main App Container (Shell) */}
-      <div className="flex w-full h-full bg-shell rounded-shell shadow-sm overflow-hidden border border-border-hairline">
+      <div className="flex w-full h-full bg-shell rounded-[var(--radius-shell)] shadow-sm overflow-hidden border border-border-hairline">
         
         {/* Sidebar Rail */}
         <aside className="w-[70px] bg-surface border-r border-border-hairline flex flex-col justify-between items-center py-6 flex-shrink-0 z-20">
           <div className="flex flex-col items-center gap-8 w-full">
             {/* Logo */}
-            <Link href="/" className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center text-white font-bold text-xl shadow-sm hover:bg-blue-600 transition-colors">
-              C
+            <Link href="/" className="relative w-10 h-10 overflow-hidden rounded-xl shadow-sm hover:opacity-90 transition-opacity">
+              <Image 
+                src="/logo.png" 
+                alt="CORA Logo" 
+                fill 
+                sizes="40px"
+                className="object-cover" 
+                priority
+              />
             </Link>
             
             {/* Nav Icons */}

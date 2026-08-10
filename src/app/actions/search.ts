@@ -3,11 +3,14 @@
 import { createClient } from '@/lib/supabase/server'
 import { requireOrganizationMember } from '@/lib/authz'
 import { withActionHandler } from '@/lib/actions-wrapper'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 export interface SearchResult { type: 'company' | 'contact' | 'officer' | 'opportunity' | 'interaction' | 'follow_up'; id: string; title: string; subtitle: string | null; href: string }
 
 export const fullTextSearch = async (query: string) => withActionHandler(async () => {
   const user = await requireOrganizationMember()
+  const rate = checkRateLimit(`search:${user.id}`, 60, 60_000)
+  if (!rate.allowed) throw new Error('CONFLICT: Search rate limit reached. Try again shortly.')
   const supabase = await createClient()
   const term = query.trim().replace(/[%_,()]/g, ' ').slice(0, 100)
   if (term.length < 2) return [] as SearchResult[]

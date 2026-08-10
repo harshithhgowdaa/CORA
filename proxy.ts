@@ -6,7 +6,8 @@ export async function proxy(request: NextRequest) {
   const supabase = createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL ?? '', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '', { cookies: { getAll: () => request.cookies.getAll(), setAll: values => values.forEach(({ name, value, options }) => { request.cookies.set(name, value); response = NextResponse.next({ request }); response.cookies.set(name, value, options) }) } })
   const { data: { user } } = await supabase.auth.getUser()
   if (!user && request.nextUrl.pathname.startsWith('/api/')) return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
-  if (!user && request.nextUrl.pathname !== '/login' && !request.nextUrl.pathname.startsWith('/auth/')) return NextResponse.redirect(new URL('/login', request.url))
+  const publicPath = request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/privacy' || request.nextUrl.pathname.startsWith('/auth/')
+  if (!user && !publicPath) return NextResponse.redirect(new URL('/login', request.url))
   return response
 }
 

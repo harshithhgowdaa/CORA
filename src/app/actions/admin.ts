@@ -120,7 +120,7 @@ export const seedDemoData = async () => {
 
     const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
       email: 'demo-admin@cora.app',
-      password: 'password123',
+      password: process.env.DEMO_SEED_PASSWORD,
       email_confirm: true
     })
 

@@ -3,7 +3,7 @@
 ## Local development
 
 1. Copy `.env.local.example` to `.env.local` and fill in the Supabase URL, anon key, and server-only service-role key.
-2. Enable Google provider in Supabase Auth and configure the callback URL `/auth/callback` on the deployed origin.
+2. Enable Google provider in Supabase Auth. In Google Cloud, use `https://<supabase-project-ref>.supabase.co/auth/v1/callback` as the OAuth client redirect URI. In Supabase Auth URL Configuration, set the Site URL to `https://<your-vercel-domain>` and add `https://<your-vercel-domain>/auth/callback` plus your local callback URL to the redirect allowlist.
 3. Only `@rvu.edu.in` addresses can create access requests. Requests are approved from Profile by the administrator. The administrator can assign officer/manager/admin roles or disable access.
 4. Apply migrations with `supabase db push` or run the SQL files in order in the Supabase SQL editor.
 5. Start the app with `npm run dev`.
@@ -35,6 +35,30 @@ The free-tier implementation emits CSV. XLSX/PDF generation is intentionally not
 - Enable Supabase database backups and review `audit_logs` regularly.
 - Configure private Supabase Storage buckets and signed URLs before enabling attachments.
 - Configure Google Workspace OAuth in Supabase Auth and restrict CRM access through the `access_requests` approval workflow.
+- Vercel environment variables: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, and a stable `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY`. Google client ID/secret belong in Supabase Auth provider settings, not Vercel or the frontend.
+
+## GitHub and Vercel deployment
+
+From the repository root, after reviewing the staged files:
+
+```bash
+git commit -m "Prepare CORA for production deployment"
+git push origin main
+```
+
+Then either import `harshithhgowdaa/CORA` from the Vercel dashboard or run:
+
+```bash
+vercel login
+vercel link
+vercel env add NEXT_PUBLIC_SUPABASE_URL production
+vercel env add NEXT_PUBLIC_SUPABASE_ANON_KEY production
+vercel env add SUPABASE_SERVICE_ROLE_KEY production
+vercel env add NEXT_SERVER_ACTIONS_ENCRYPTION_KEY production
+vercel --prod
+```
+
+Enter secret values interactively; do not place them in shell commands, GitHub, or client code. After the first deployment, replace `<your-vercel-domain>` in Supabase Auth URL Configuration with the actual Vercel domain and test Google login, pending access, approval, and disabled access.
 
 ## Phase 1 boundaries
 

@@ -84,7 +84,8 @@
   --radius: 1rem;
 }
 
-@theme inline {
+@theme {
+  /* CORA Custom Tokens */
   --color-app: var(--bg-app);
   --color-shell: var(--bg-shell);
   --color-surface: var(--bg-surface);
@@ -116,6 +117,27 @@
   --radius-card: var(--radius-card);
   --radius-pill: var(--radius-pill);
   --radius-cell: var(--radius-cell);
+
+  /* Shadcn/UI Component Mappings for Uniformity */
+  --color-background: var(--bg-shell);
+  --color-foreground: var(--text-primary);
+  --color-card: var(--bg-shell);
+  --color-card-foreground: var(--text-primary);
+  --color-popover: var(--bg-shell);
+  --color-popover-foreground: var(--text-primary);
+  --color-primary: var(--text-primary);
+  --color-primary-foreground: var(--bg-shell);
+  --color-secondary: var(--bg-surface);
+  --color-secondary-foreground: var(--text-secondary);
+  --color-muted: var(--bg-subtle);
+  --color-muted-foreground: var(--text-muted);
+  --color-accent: var(--bg-subtle);
+  --color-accent-foreground: var(--text-primary);
+  --color-destructive: #EF4444;
+  --color-destructive-foreground: var(--bg-shell);
+  --color-border: var(--border-hairline);
+  --color-input: var(--border-hairline);
+  --color-ring: var(--blue-500);
 }
 
 @layer base {
