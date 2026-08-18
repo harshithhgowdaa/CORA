@@ -19,7 +19,7 @@ export const getCompanies = async (filters?: { status?: string; industry?: strin
 
     let query = supabase
       .from('companies')
-      .select('id, name, industry, status, website, created_at, updated_at')
+      .select('id, name, industry, sector, company_type, status, website, headquarters, india_headquarters, state, rvu_priority, verification_status, hiring_freshers, internship_program, campus_hiring, tags, imported_data, enrichment, enrichment_status, created_at, updated_at')
       .eq('org_id', orgId)
       .order('name')
 
@@ -64,7 +64,7 @@ export const getCompany = async (id: string) => {
     // Basic company info
     const { data: company, error } = await supabase
       .from('companies')
-      .select('id, name, industry, status, website, notes, created_at, updated_at')
+      .select('id, name, industry, sector, company_type, status, website, headquarters, india_headquarters, state, careers_url, linkedin_company_url, bengaluru_presence, rvu_priority, hiring_freshers, internship_program, graduate_programs, courses_eligible, typical_roles, hiring_months, ctc_range, campus_hiring, hiring_process, ats_platform, diversity_hiring, ppo_program, office_address, previous_recruitment, relevant_rvu_schools, existing_rvu_connect, evidence_url, last_verified_at, verification_status, public_recruitment_email, public_phone, hr_head_name, talent_acquisition_head_name, campus_recruitment_lead_name, recruiter_designation, recruiter_linkedin_url, ceo_name, founders, founded_year, notes, size, headquarters, description, tags, imported_data, enrichment, enrichment_status, enriched_at, created_at, updated_at')
       .eq('id', id)
       .single()
 
@@ -78,7 +78,7 @@ export const getCompany = async (id: string) => {
       { data: followUps },
       { data: opportunities },
     ] = await Promise.all([
-      supabase.from('contacts').select('id, first_name, last_name, email, role, phone, linkedin').eq('company_id', id).order('first_name'),
+      supabase.from('contacts').select('id, first_name, last_name, email, role, phone, linkedin, title, department, preferred_communication, is_primary, additional_details').eq('company_id', id).order('first_name'),
       supabase.from('interactions').select('id, type, notes, date, outcome, author:author_id(id, full_name)').eq('company_id', id).order('date', { ascending: false }).limit(30),
       supabase.from('relationship_assignments').select('id, assignment_type, is_active, start_date, users(id, full_name, role, email)').eq('company_id', id).eq('is_active', true),
       supabase.from('follow_ups').select('id, title, status, priority, due_date, officer_id, officer:officer_id(full_name)').eq('company_id', id).order('due_date', { ascending: true }),
@@ -186,19 +186,82 @@ export const updateCompanyStatus = async (id: string, status: string) => {
   })
 }
 
-export const deleteCompany = async (companyId: string) => {
+export const deleteCompany = async (companyId: string | string[]) => {
   return withActionHandler(async () => {
     const currentUser = await requirePermission('write')
-    const supabase = await createClient()
-    const { error: alumniError } = await supabase.from('alumni').update({ current_company_id: null }).eq('current_company_id', companyId).eq('org_id', currentUser.orgId)
+    const admin = await createAdminClient()
+    const ids = Array.isArray(companyId) ? companyId.filter(Boolean) : [companyId]
+    if (ids.length === 0) return { id: '', count: 0 }
+
+    // 1. Clear current_company_id references in alumni
+    const { error: alumniError } = await admin
+      .from('alumni')
+      .update({ current_company_id: null })
+      .in('current_company_id', ids)
+      .eq('org_id', currentUser.orgId)
     if (alumniError) throw new Error(`DATABASE: ${alumniError.message}`)
-    const { error: interactionError } = await supabase.from('interactions').delete().eq('company_id', companyId).eq('org_id', currentUser.orgId)
+
+    // 2. Delete follow_ups
+    const { error: followUpError } = await admin
+      .from('follow_ups')
+      .delete()
+      .in('company_id', ids)
+      .eq('org_id', currentUser.orgId)
+    if (followUpError) throw new Error(`DATABASE: ${followUpError.message}`)
+
+    // 3. Delete interactions
+    const { error: interactionError } = await admin
+      .from('interactions')
+      .delete()
+      .in('company_id', ids)
+      .eq('org_id', currentUser.orgId)
     if (interactionError) throw new Error(`DATABASE: ${interactionError.message}`)
-    const { error } = await supabase.from('companies').delete().eq('id', companyId).eq('org_id', currentUser.orgId)
+
+    // 4. Delete opportunities
+    const { error: oppError } = await admin
+      .from('opportunities')
+      .delete()
+      .in('company_id', ids)
+      .eq('org_id', currentUser.orgId)
+    if (oppError) throw new Error(`DATABASE: ${oppError.message}`)
+
+    // 5. Delete initiatives
+    const { error: initError } = await admin
+      .from('initiatives')
+      .delete()
+      .in('company_id', ids)
+      .eq('org_id', currentUser.orgId)
+    if (initError) throw new Error(`DATABASE: ${initError.message}`)
+
+    // 6. Delete contacts
+    const { error: contactError } = await admin
+      .from('contacts')
+      .delete()
+      .in('company_id', ids)
+      .eq('org_id', currentUser.orgId)
+    if (contactError) throw new Error(`DATABASE: ${contactError.message}`)
+
+    // 7. Delete relationship_assignments
+    const { error: assignError } = await admin
+      .from('relationship_assignments')
+      .delete()
+      .in('company_id', ids)
+      .eq('org_id', currentUser.orgId)
+    if (assignError) throw new Error(`DATABASE: ${assignError.message}`)
+
+    // 8. Delete companies
+    const { error } = await admin
+      .from('companies')
+      .delete()
+      .in('id', ids)
+      .eq('org_id', currentUser.orgId)
     if (error) throw new Error(`DATABASE: ${error.message}`)
+
     revalidatePath('/companies', 'page')
     revalidatePath('/', 'page')
-    return { id: companyId }
+    revalidatePath('/pipeline', 'page')
+    revalidatePath('/follow-ups', 'page')
+    return { id: ids[0], count: ids.length }
   })
 }
 

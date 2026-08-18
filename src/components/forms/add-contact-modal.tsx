@@ -15,6 +15,7 @@ export function AddContactModal({
 }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [details, setDetails] = useState<Array<{ label: string; value: string; type: 'email' | 'phone' | 'linkedin' | 'url' | 'other' }>>([])
 
   if (!isOpen) return null
 
@@ -25,6 +26,7 @@ export function AddContactModal({
     
     const formData = new FormData(e.currentTarget)
     formData.append('company_id', companyId)
+    formData.set('additional_details', JSON.stringify(details.filter(detail => detail.label.trim() && detail.value.trim())))
     
     const response = await createContact(formData)
 
@@ -84,6 +86,11 @@ export function AddContactModal({
                 className="w-full bg-subtle border border-border-hairline rounded-cell px-4 py-2.5 text-[14px] text-text-primary focus:outline-none focus:border-blue-500 focus:bg-shell transition-colors"
               />
             </div>
+          </div>
+
+          <div className="space-y-2 rounded-cell border border-border-hairline p-3 bg-surface">
+            <div className="flex items-center justify-between"><p className="text-[12px] font-medium text-text-secondary">Extra contact details</p><button type="button" onClick={() => setDetails(current => [...current, { label: '', value: '', type: 'other' }])} className="text-xs text-blue-600">+ Add detail</button></div>
+            {details.map((detail, index) => <div key={index} className="grid grid-cols-[100px_1fr_auto] gap-2"><select value={detail.type} onChange={event => setDetails(current => current.map((item, position) => position === index ? { ...item, type: event.target.value as typeof item.type } : item))} className="border border-border-hairline rounded px-2 text-xs"><option value="email">Email</option><option value="phone">Phone</option><option value="linkedin">LinkedIn</option><option value="url">URL</option><option value="other">Other</option></select><input value={detail.value} onChange={event => setDetails(current => current.map((item, position) => position === index ? { ...item, value: event.target.value, label: item.label || event.target.value } : item))} placeholder="Value" className="min-w-0 border border-border-hairline rounded px-2 text-xs" /><button type="button" onClick={() => setDetails(current => current.filter((_, position) => position !== index))} className="text-xs text-red-600">Remove</button></div>)}
           </div>
 
           <div>

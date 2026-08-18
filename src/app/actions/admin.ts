@@ -161,6 +161,33 @@ export const seedDemoData = async () => {
   })
 }
 
+export const clearAllSystemData = async () => {
+  return withActionHandler(async () => {
+    const current = await requireRole(['admin'])
+    const admin = await createAdminClient()
+
+    // Delete in order to avoid foreign key errors
+    await admin.from('follow_ups').delete().eq('org_id', current.orgId)
+    await admin.from('interactions').delete().eq('org_id', current.orgId)
+    await admin.from('opportunities').delete().eq('org_id', current.orgId)
+    await admin.from('initiatives').delete().eq('org_id', current.orgId)
+    await admin.from('relationship_assignments').delete().eq('org_id', current.orgId)
+    await admin.from('alumni').update({ current_company_id: null }).eq('org_id', current.orgId)
+    await admin.from('contacts').delete().eq('org_id', current.orgId)
+    const { error } = await admin.from('companies').delete().eq('org_id', current.orgId)
+    if (error) throw new Error(`DATABASE: ${error.message}`)
+
+    revalidatePath('/', 'page')
+    revalidatePath('/companies', 'page')
+    revalidatePath('/pipeline', 'page')
+    revalidatePath('/follow-ups', 'page')
+    revalidatePath('/alumni', 'page')
+    revalidatePath('/profile', 'page')
+
+    return { cleared: true }
+  })
+}
+
 // Execute the seed script if run directly
 if (import.meta.url === `file://${process.argv[1]}`) {
   seedDemoData()

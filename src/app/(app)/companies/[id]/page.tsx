@@ -6,6 +6,7 @@ import { CompanyDetailActions } from '@/components/forms/company-detail-actions'
 import { format, formatDistanceToNow } from 'date-fns'
 import { RemoveOwnerButton } from '@/components/forms/remove-owner-button'
 import { CompanyStatusSelect } from '@/components/forms/company-status-select'
+import { CompanyResearchCard } from '@/components/companies/company-research-card'
 
 const STATUS_STYLES: Record<string, string> = {
   'Prospect': 'bg-gray-100 text-gray-600 border-gray-200',
@@ -230,6 +231,21 @@ export default async function CompanyPage({ params }: { params: Promise<{ id: st
 
         {/* Right sidebar */}
         <div className="space-y-6">
+          <CompanyResearchCard companyId={company.id} enrichment={company.enrichment || {}} status={company.enrichment_status || 'not_researched'} />
+          <div className="bg-shell p-5 rounded-card border border-border-hairline shadow-sm">
+            <h3 className="text-[15px] font-semibold text-text-primary mb-3">Placement profile</h3>
+            <dl className="space-y-2 text-[12px]">
+              {[["Sector", company.sector], ["Company type", company.company_type], ["India HQ", company.india_headquarters], ["State", company.state], ["RVU priority", company.rvu_priority], ["Hiring freshers", company.hiring_freshers == null ? null : company.hiring_freshers ? 'Yes' : 'No'], ["Internship program", company.internship_program == null ? null : company.internship_program ? 'Yes' : 'No'], ["Campus hiring", company.campus_hiring == null ? null : company.campus_hiring ? 'Yes' : 'No'], ["CTC range", company.ctc_range], ["Courses", company.courses_eligible], ["Typical roles", company.typical_roles], ["Verification", company.verification_status], ["Last verified", company.last_verified_at]].filter(([, value]) => value).map(([label, value]) => <div key={label as string} className="flex justify-between gap-3"><dt className="text-text-muted">{label}</dt><dd className="text-right text-text-primary break-words">{value as string}</dd></div>)}
+            </dl>
+          </div>
+          {Object.keys(company.imported_data || {}).length > 0 && (
+            <div className="bg-shell p-5 rounded-card border border-border-hairline shadow-sm">
+              <h3 className="text-[15px] font-semibold text-text-primary mb-3">Imported company data</h3>
+              <dl className="space-y-2 text-[12px]">
+                {Object.entries(company.imported_data as Record<string, string>).map(([key, value]) => <div key={key} className="flex justify-between gap-3"><dt className="text-text-muted truncate">{key}</dt><dd className="text-text-primary text-right break-words">{value}</dd></div>)}
+              </dl>
+            </div>
+          )}
           {/* Contacts */}
           <div className="bg-shell p-5 rounded-card border border-border-hairline shadow-sm">
             <h3 className="text-[15px] font-semibold text-text-primary mb-4">Contacts</h3>
@@ -262,6 +278,10 @@ export default async function CompanyPage({ params }: { params: Promise<{ id: st
                           LinkedIn profile
                         </a>
                       )}
+                      {Array.isArray(contact.additional_details) && contact.additional_details.map((detail: { label: string; value: string; type: string }, index: number) => {
+                        const href = detail.type === 'email' ? `mailto:${detail.value}` : detail.type === 'phone' ? `tel:${detail.value}` : detail.type === 'linkedin' || detail.type === 'url' ? (detail.value.startsWith('http') ? detail.value : `https://${detail.value}`) : null
+                        return href ? <a key={index} href={href} target={detail.type === 'email' || detail.type === 'phone' ? undefined : '_blank'} rel="noreferrer" className="text-[11px] text-blue-500 hover:underline truncate">{detail.label || detail.value}</a> : <span key={index} className="text-[11px] text-text-muted truncate">{detail.label}: {detail.value}</span>
+                      })}
                     </div>
                   </div>
                 </div>

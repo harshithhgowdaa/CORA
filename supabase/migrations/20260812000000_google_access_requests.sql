@@ -47,7 +47,9 @@ create table if not exists public.access_requests (
 );
 
 alter table public.access_requests enable row level security;
+drop policy if exists access_requests_self_read on public.access_requests;
 create policy access_requests_self_read on public.access_requests for select using (auth_user_id = auth.uid() or (org_id = public.get_current_org_id() and public.has_cora_role(array['admin'])));
+drop policy if exists access_requests_self_insert on public.access_requests;
 create policy access_requests_self_insert on public.access_requests for insert with check (auth_user_id = auth.uid() and org_id = public.get_current_org_id());
 
 create index if not exists access_requests_org_status_idx on public.access_requests(org_id, status, created_at desc);

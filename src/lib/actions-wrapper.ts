@@ -7,6 +7,7 @@ export async function withActionHandler<T>(
     const data = await action();
     return { success: true, data };
   } catch (error: unknown) {
+    console.error('ACTION ERROR:', error)
     const message = error instanceof Error ? error.message : 'An unexpected error occurred'
     const [prefix, ...parts] = message.split(': ')
     const knownCodes = ['UNAUTHENTICATED', 'FORBIDDEN', 'VALIDATION', 'NOT_FOUND', 'CONFLICT', 'DATABASE'] as const

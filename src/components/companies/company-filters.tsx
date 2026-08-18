@@ -41,7 +41,7 @@ export function CompanyFilters({ initialSearch = '', initialStatus = 'All', init
           type="text"
           value={search}
           onChange={e => handleSearch(e.target.value)}
-          placeholder="Search companies..."
+          placeholder="Search any company field..."
           className="bg-transparent border-none outline-none ml-2 text-[13px] w-full text-text-primary placeholder:text-text-muted"
         />
       </div>

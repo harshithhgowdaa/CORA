@@ -4,6 +4,14 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { withActionHandler } from '@/lib/actions-wrapper'
 import { revalidatePath } from 'next/cache'
 import { requirePermission } from '@/lib/authz'
+import { z } from 'zod'
+
+const additionalDetailSchema = z.array(z.object({ label: z.string().trim().min(1).max(80), value: z.string().trim().min(1).max(500), type: z.enum(['email', 'phone', 'linkedin', 'url', 'other']).default('other') })).max(20)
+function extraDetails(formData: FormData) {
+  const raw = formData.get('additional_details')
+  if (typeof raw !== 'string' || !raw) return []
+  try { return additionalDetailSchema.parse(JSON.parse(raw)) } catch { throw new Error('VALIDATION: Extra contact details are invalid') }
+}
 
 export const createContact = async (formData: FormData) => {
   return withActionHandler(async () => {
@@ -29,6 +37,7 @@ export const createContact = async (formData: FormData) => {
         role: formData.get('role') as string || null,
         phone: formData.get('phone') as string || null,
         linkedin: formData.get('linkedin') as string || null,
+        additional_details: extraDetails(formData),
         company_id: companyId,
         org_id: currentUser.orgId,
       })
@@ -56,6 +65,7 @@ export const updateContact = async (id: string, formData: FormData) => {
         role: formData.get('role') as string || null,
         phone: formData.get('phone') as string || null,
         linkedin: formData.get('linkedin') as string || null,
+        additional_details: extraDetails(formData),
       })
       .eq('id', id)
       .select('id, company_id')
